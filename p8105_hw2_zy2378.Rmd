@@ -1,0 +1,88 @@
+---
+title: "p8105_hw2_zy2378.Rmd"
+author: "zy"
+date: "10/7/2021"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+```{r}
+library(lubridate)
+```
+
+
+```{r}
+trashwheel_df=
+  readxl::read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",sheet=1,range="A2:N535")%>%
+  janitor::clean_names()%>%
+  drop_na()%>%
+  mutate(sports_balls=round(sports_balls))
+
+precipitation_2019=
+  readxl::read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",sheet=6,range="A2:B14")%>%
+  drop_na()%>%
+  mutate(year=2019)
+precipitation_2019
+
+precipitation_2018=
+  readxl::read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",sheet=7,range="A2:B14")%>%
+  drop_na()%>%
+  mutate(year=2018)
+precipitation_2018
+
+precipitation_data = 
+  inner_join(precipitation_2018, precipitation_2019,by="Month")%>%
+  mutate(Month=month.name)
+
+precipitation_data
+
+  
+  
+```
+
+```{r}
+pols_month=
+  readr::read_csv("./data/fivethirtyeight_datasets/pols-month.csv")%>%
+  separate(mon,into=c("year","month","day"))%>%
+  mutate(month=c(rep(month.name,68),"January","February","March","April","May","June"))%>%
+  pivot_longer(c(prez_gop,prez_dem),names_to="president",names_prefix = "prez_")%>%
+  filter(value>=1)%>%
+  mutate(year=as.numeric(year))%>%
+  select(-day,-value)
+pols_month
+
+```
+
+```{r}
+snp_df=
+  readr::read_csv("./data/fivethirtyeight_datasets/snp.csv")%>%
+  mutate(date=mdy(date))%>%
+  separate(date,into=c("year","month","day"),convert = TRUE)%>%
+  mutate(year=ifelse(2049<year,year-100,year))%>%
+  arrange(year,month)%>%
+  mutate(month=c(rep(month.name,65),"January","February","March","April","May","June","July"))%>%
+  mutate(year=as.numeric(year))%>%
+  select(-day)
+snp_df
+```
+
+```{r}
+unemployment_df=
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv")%>%
+  pivot_longer(Jan:Dec,names_to="month",values_to="unemployment")%>%
+  drop_na()%>%
+  mutate(month=c(rep(month.name,67),"January","February","March","April","May","June"))%>%
+  rename(year=Year)
+unemployment_df
+```
+
+```{r}
+fivethirtyeight1_df=inner_join(pols_month,snp_df)
+fivethirtyeight_df=inner_join(fivethirtyeight1_df,unemployment_df)
+fivethirtyeight_df
+```
+
