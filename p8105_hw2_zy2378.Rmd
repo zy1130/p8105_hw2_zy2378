@@ -8,11 +8,12 @@ output: github_document
 ```{r}
 library(tidyverse)
 library(readxl)
-```
-
-```{r}
+library(stringr)
+library(dplyr)
+library(ggplot2)
 library(lubridate)
 ```
+
 
 
 ```{r}
@@ -21,6 +22,7 @@ trashwheel_df=
   janitor::clean_names()%>%
   drop_na()%>%
   mutate(sports_balls=round(sports_balls))
+trashwheel_df
 
 precipitation_2019=
   readxl::read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",sheet=6,range="A2:B14")%>%
@@ -35,14 +37,19 @@ precipitation_2018=
 precipitation_2018
 
 precipitation_data = 
-  inner_join(precipitation_2018, precipitation_2019,by="Month")%>%
-  mutate(Month=month.name)
+  bind_rows(precipitation_2018, precipitation_2019)%>%
+  mutate(Month=rep(month.name,2))%>%
+  relocate(year)
 
 precipitation_data
 
   
-  
 ```
+
+
+#For trashwheel data, number of obs is 453, and key variables include weight_tons,volume_cubic_yards, etc.For precipitation data in 2018 and 2019，number of obs is 24, key variables include Total, etc.The total precipitation in 2018 is `r sum(precipitation_2018$Total)`, and the median number of sports balls in a dumpster in 2019 is `r trashwheel_df1=filter(trashwheel_df,year==2019)``r median(trashwheel_df1$sports_balls)`
+
+
 
 ```{r}
 pols_month=
@@ -85,4 +92,44 @@ fivethirtyeight1_df=inner_join(pols_month,snp_df)
 fivethirtyeight_df=inner_join(fivethirtyeight1_df,unemployment_df)
 fivethirtyeight_df
 ```
+
+
+#For the pols_month dataset, it contains pols data each month for democracy and republician from 1947 to 2015.For the snp dataset, it contains snp data each month from 1950 to 2015.For the unemployment dataset, it contains unemployment rate data each month from 1948 to 2015.For the resulting dataset,it has 786 rows and 11 columns, ranging from 1950 to 2016, and key variables include gov_gop, close, unemployment, etc.
+
+```{r}
+popular_baby_names_df=
+  readr::read_csv("./data/Popular_Baby_Names.csv")%>%
+  janitor::clean_names()
+
+popular_baby_names_df = popular_baby_names_df %>%
+  mutate(childs_first_name = tolower(childs_first_name))%>%
+  mutate(ethnicity=gsub("ASIAN AND PACI|ASIAN AND PACIFIC ISLANDER","ASIAN AND PACIFIC ISLANDER",popular_baby_names_df$ethnicity))
+
+popular_baby_names_df= popular_baby_names_df %>%
+  mutate(ethnicity=gsub("BLACK NON HISP|BLACK NON HISPANIC","BLACK NON HISPANIC",popular_baby_names_df$ethnicity))
+
+popular_baby_names_df= popular_baby_names_df %>%
+  mutate(ethnicity=gsub("WHITE NON HISP|WHITE NON HISPANIC","WHITE NON HISPANIC",popular_baby_names_df$ethnicity))
+
+popular_baby_names_df=popular_baby_names_df %>% distinct(year_of_birth,gender,ethnicity,childs_first_name, .keep_all = TRUE)
+
+popular_baby_names_df
+```
+
+```{r}
+olivia_df=
+  filter(popular_baby_names_df,childs_first_name=="olivia",gender=="FEMALE")%>%
+  select(-gender,-childs_first_name,-count)
+olivia_df
+most_popular_name_df=
+  filter(popular_baby_names_df,rank==1,gender=="MALE")%>%
+  select(-gender,-rank,-count)
+most_popular_name_df
+male_whitenonhis_df=
+  filter(popular_baby_names_df,gender=="MALE",year_of_birth==2016,ethnicity=="WHITE NON HISPANIC")
+ggplot(male_whitenonhis_df, aes(x = rank, y = count))+
+  geom_point()
+male_whitenonhis_df
+```
+
 
