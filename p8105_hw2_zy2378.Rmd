@@ -129,7 +129,8 @@ male_whitenonhis_df=
   filter(popular_baby_names_df,gender=="MALE",year_of_birth==2016,ethnicity=="WHITE NON HISPANIC")
 ggplot(male_whitenonhis_df, aes(x = rank, y = count))+
   geom_point()
-male_whitenonhis_df
+ggsave("scatter_plot.pdf", height = 4, width = 6)
+
 ```
 
 
